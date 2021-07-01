@@ -1,12 +1,26 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Bar } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import "./App.css";
 
 function App() {
   // State -- useContext later?
-  //// Store key as env later?
+  // // Store key as env later w/ dotenv?
   const [key, setKey] = useState("onsere55uzm9df6:i8n07a6g4oow03i");
+  const [teData, setTeData] = useState({
+    gdp: {
+      time: [],
+      values: [],
+    },
+    pmi: {
+      time: [],
+      values: [],
+    },
+    bp: {
+      time: [],
+      values: [],
+    },
+  });
 
   // Functions
   useEffect(() => {
@@ -15,7 +29,19 @@ function App() {
       .get(
         `https://api.tradingeconomics.com/historical/country/new%20zealand/indicator/GDP%20Growth%20Rate?c=${key}`
       )
-      .then((res) => console.log(res.data));
+      .then((res) => {
+        //Format data
+        const fData = formatData(res.data);
+
+        //Add to state
+        setTeData({
+          ...teData,
+          gdp: {
+            time: fData.time,
+            values: fData.values,
+          },
+        });
+      });
 
     //Get Building Permits
     axios
@@ -32,16 +58,39 @@ function App() {
       .then((res) => console.log(res.data));
   }, []);
 
+  const formatData = (data) => {
+    const timeArr = [];
+    const valArr = [];
+
+    for (const obj of data) {
+      timeArr.push(obj.DateTime);
+      valArr.push(obj.Value);
+    }
+    return {
+      time: timeArr,
+      values: valArr,
+    };
+  };
+
   return (
     <div className="App">
-      <Bar
+      <Line
         data={{
-          labels: ["Jan", "Feb", "Mar", "Apr"],
+          labels: teData.gdp.time,
           datasets: [
             {
-              data: [100, 200, 300, 400],
+              data: teData.gdp.values,
             },
           ],
+        }}
+        options={{
+          scales: {
+            xAxes: [
+              {
+                type: "time",
+              },
+            ],
+          },
         }}
       />
     </div>
