@@ -7,20 +7,15 @@ function App() {
   // State -- useContext later?
   // // Store key as env later w/ dotenv?
   const [key, setKey] = useState("onsere55uzm9df6:i8n07a6g4oow03i");
-  const [teData, setTeData] = useState({
-    gdp: {
-      time: [],
-      values: [],
-    },
-    pmi: {
-      time: [],
-      values: [],
-    },
-    bp: {
-      time: [],
-      values: [],
-    },
-  });
+
+  const seriesFormat = {
+    time: [],
+    vlaues: [],
+  };
+
+  const [gdp, setGDP] = useState(seriesFormat);
+  const [bp, setBP] = useState(seriesFormat);
+  const [pmi, setPMI] = useState(seriesFormat);
 
   // Functions
   useEffect(() => {
@@ -34,12 +29,9 @@ function App() {
         const fData = formatData(res.data);
 
         //Add to state
-        setTeData({
-          ...teData,
-          gdp: {
-            time: fData.time,
-            values: fData.values,
-          },
+        setGDP({
+          time: fData.time,
+          values: fData.values,
         });
       });
 
@@ -48,14 +40,32 @@ function App() {
       .get(
         `https://api.tradingeconomics.com/historical/country/new%20zealand/indicator/Building%20Permits?c=${key}`
       )
-      .then((res) => console.log(res.data));
+      .then((res) => {
+        //Format data
+        const fData = formatData(res.data);
+
+        //Add to state
+        setBP({
+          time: fData.time,
+          values: fData.values,
+        });
+      });
 
     //Get PMI
     axios
       .get(
         `https://api.tradingeconomics.com/historical/country/new%20zealand/indicator/Composite%20PMI?c=${key}`
       )
-      .then((res) => console.log(res.data));
+      .then((res) => {
+        //Format data
+        const fData = formatData(res.data);
+
+        //Add to state
+        setPMI({
+          time: fData.time,
+          values: fData.values,
+        });
+      });
   }, []);
 
   const formatData = (data) => {
@@ -63,6 +73,9 @@ function App() {
     const valArr = [];
 
     for (const obj of data) {
+      //If "Free accounts have access to..." entry appears, skip over it.
+      if (obj.Category === "") continue;
+
       timeArr.push(obj.DateTime);
       valArr.push(obj.Value);
     }
@@ -76,14 +89,72 @@ function App() {
     <div className="App">
       <Line
         data={{
-          labels: teData.gdp.time,
+          labels: gdp.time,
           datasets: [
             {
-              data: teData.gdp.values,
+              data: gdp.values,
             },
           ],
         }}
         options={{
+          plugins: {
+            title: {
+              display: true,
+              text: "GDP QoQ % Change",
+            },
+          },
+          scales: {
+            xAxes: [
+              {
+                type: "time",
+              },
+            ],
+          },
+        }}
+      />
+
+      <Line
+        data={{
+          labels: bp.time,
+          datasets: [
+            {
+              data: bp.values,
+            },
+          ],
+        }}
+        options={{
+          plugins: {
+            title: {
+              display: true,
+              text: "Building Permits",
+            },
+          },
+          scales: {
+            xAxes: [
+              {
+                type: "time",
+              },
+            ],
+          },
+        }}
+      />
+
+      <Line
+        data={{
+          labels: pmi.time,
+          datasets: [
+            {
+              data: pmi.values,
+            },
+          ],
+        }}
+        options={{
+          plugins: {
+            title: {
+              display: true,
+              text: "Composite PMI",
+            },
+          },
           scales: {
             xAxes: [
               {
